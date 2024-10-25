@@ -1,0 +1,57 @@
+---
+- name: Adicionar hosts no Zabbix via SNMP
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    zabbix_api_url: "http://192.168.0.225/api_jsonrpc.php"
+    auth_token: "9016c2e484b954ef43f2adf98e69c4a0"
+    template_id: 10218
+    group_id: 6
+    json_file_path: "/home/osboxes/neighbors.json"  # Caminho do arquivo JSON com os vizinhos
+
+  tasks:
+    - name: Ler informações dos vizinhos do arquivo JSON
+      slurp:
+        src: "{{ json_file_path }}"
+      register: json_content
+
+    - name: Decodificar conteúdo JSON
+      set_fact:
+        neighbor_list: "{{ json_content.content | b64decode | from_json }}"
+
+    - name: Adicionar cada host no Zabbix
+      uri:
+        url: "{{ zabbix_api_url }}"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          jsonrpc: "2.0"
+          method: "host.create"
+          params:
+            host: "{{ item.hostname }}"
+            interfaces:
+              - type: 2                    # 1 = agente Zabbix, 2 = SNMP, 3 = IPMI, 4 = JMX
+                main: 1                    # 1 = interface principal
+                useip: 1                   # 1 = usar IP em vez de DNS
+                ip: "{{ item.ip }}"
+                dns: ""
+                port: "161"                # Porta padrão SNMP
+                details:                   # SNMP-specific fields
+                  version: 2               # SNMP v2
+                  community: "public"      # Comunidade SNMP
+            groups:
+              - groupid: "{{ group_id }}"  # ID do grupo de hosts
+            templates:
+              - templateid: "{{ template_id }}"  # ID do template
+          auth: "{{ auth_token }}"
+          id: 1
+        return_content: yes
+      register: create_host
+      loop: "{{ neighbor_list }}"  # Loop através da lista de vizinhos
+
+    - name: Verificar a resposta da criação dos hosts
+      debug:
+        var: create_host

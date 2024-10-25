@@ -1,0 +1,37 @@
+---
+- name: Capturar informações CDP neighbors do roteador Cisco
+  hosts: my_router
+  gather_facts: false
+  connection: network_cli
+  tasks:
+
+    - name: Executar o comando 'show cdp neighbors detail'
+      ios_command:
+        commands:
+          - show cdp neighbors detail
+      register: cdp_output
+
+    - name: Extraindo hostname e IP do output
+      set_fact:
+        neighbors: "{{ cdp_output.stdout[0] | regex_findall('Device ID: (\\S+)[\\s\\S]*?IP address: (\\S+)', multiline=True) }}"
+
+    - name: Armazenar informações dos vizinhos em uma lista
+      set_fact:
+        neighbor_list: "{{ neighbor_list | default([]) + [{'hostname': item.0, 'ip': item.1}] }}"
+      loop: "{{ neighbors }}"
+
+    - name: Salvar lista de vizinhos em um arquivo JSON
+      copy:
+        content: "{{ neighbor_list | to_json | indent(2) }}"
+        dest: "/home/osboxes/neighbors.json"  # Alterado para um diretório acessível
+        mode: '0644'
+
+    - name: Exibir a lista de vizinhos
+      debug:
+        var: neighbor_list
+
+    - name: Mostrar os vizinhos encontrados
+      debug:
+        msg: "Hostname: {{ item.hostname }}, IP: {{ item.ip }}"
+      loop: "{{ neighbor_list }}"
+

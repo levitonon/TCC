@@ -1,0 +1,74 @@
+---
+- name: Capturar informações CDP neighbors do roteador Cisco e adicionar ao Zabbix
+  hosts: my_router
+  gather_facts: false
+
+  vars:
+    zabbix_api_url: "http://192.168.0.225/api_jsonrpc.php"
+    auth_token: "9016c2e484b954ef43f2adf98e69c4a0"
+    template_id: 10218
+    group_id: 6
+
+  tasks:
+    - name: Executar o comando 'show cdp neighbors detail'
+      ios_command:
+        commands:
+          - show cdp neighbors detail
+      register: cdp_output
+
+    - name: Exibir a saída do comando 'show cdp neighbors detail'
+      debug:
+        var: cdp_output.stdout
+
+    - name: Processar a saída do comando para capturar hostname e IP
+      set_fact:
+        neighbors: >
+          {%- set device_ids = cdp_output.stdout | regex_findall('Device ID: (\\S+)') %}
+          {%- set ip_addresses = cdp_output.stdout | regex_findall('IP address: (\\d+\\.\\d+\\.\\d+\\.\\d+)') %}
+          {%- if device_ids | length > 0 and ip_addresses | length > 0 %}
+            {{ [ (device_ids[0].strip(), ip_addresses[0].strip()) ] }}  # Garante que neighbors é uma lista
+          {%- else %}
+            []
+          {%- endif %}
+
+    - name: Exibir neighbors capturados
+      debug:
+        var: neighbors
+
+    - name: Adicionar hosts ao Zabbix
+      uri:
+        url: "{{ zabbix_api_url }}"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          jsonrpc: "2.0"
+          method: "host.create"
+          params:
+            host: "{{ item[0] }}"  # device_id
+            interfaces:
+              - type: 2                    # 2 = SNMP
+                main: 1                    # 1 = interface principal
+                useip: 1                   # 1 = usar IP em vez de DNS
+                ip: "{{ item[1] }}"        # ip_address
+                dns: ""
+                port: "161"                # Porta padrão SNMP
+                details:                   # Campos específicos do SNMP
+                  version: 2               # SNMP v2
+                  community: "public"      # Comunidade SNMP
+            groups:
+              - groupid: "{{ group_id }}"  # ID do grupo de hosts
+            templates:
+              - templateid: "{{ template_id }}"  # ID do template
+          auth: "{{ auth_token }}"
+          id: 1
+        return_content: yes
+      register: create_host
+      loop: "{{ neighbors }}"
+      when: neighbors | length > 0
+
+    - name: Verificar a resposta da criação do host no Zabbix
+      debug:
+        var: create_host.json
+      when: neighbors | length > 0

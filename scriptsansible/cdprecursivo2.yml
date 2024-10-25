@@ -1,0 +1,110 @@
+---
+- name: Capturar informações CDP neighbors do roteador Cisco
+  hosts: routers
+  gather_facts: no
+  tasks:
+    
+    - name: Executar o comando 'show cdp neighbors detail'
+      ios_command:
+        commands: "show cdp neighbors detail"
+      register: cdp_output
+
+    - name: Extraindo hostname e IP do output
+      set_fact:
+        neighbor_list: "{{ neighbor_list | default([]) + new_neighbors }}"
+      vars:
+        new_neighbors: >
+          [{% for item in cdp_output.stdout_lines[0] %}
+            {% if item['management_ip'] %}
+              {"hostname": "{{ item['destination_host'] }}", "ip": "{{ item['management_ip'] }}"}{% if not loop.last %},{% endif %}
+            {% endif %}
+          {% endfor %}]
+          
+    - name: Carregar o arquivo JSON de vizinhos, se existir
+      stat:
+        path: /home/osboxes/neighbors.json
+      register: neighbor_file
+
+    - name: Ler o arquivo JSON de vizinhos existentes
+      when: neighbor_file.stat.exists
+      slurp:
+        src: /home/osboxes/neighbors.json
+      register: neighbor_json_data
+
+    - name: Converter vizinhos existentes de JSON para lista
+      set_fact:
+        existing_neighbors: "{{ neighbor_json_data.content | b64decode | from_json }}"
+      when: neighbor_file.stat.exists
+
+    - name: Adicionar novos vizinhos ao JSON
+      copy:
+        dest: /home/osboxes/neighbors.json
+        content: "{{ (existing_neighbors | default([])) + neighbor_list | unique | to_json }}"
+      when: neighbor_file.stat.exists
+
+    - name: Exibir a lista de vizinhos
+      debug:
+        var: neighbor_list
+
+    - name: Mostrar os vizinhos encontrados
+      debug:
+        msg: "Hostname: {{ item['hostname'] }}, IP: {{ item['ip'] }}"
+      loop: "{{ neighbor_list }}"
+
+    - name: Criar um inventário dinâmico para os vizinhos
+      add_host:
+        name: "{{ item['hostname'] }}"
+        ansible_host: "{{ item['ip'] }}"
+      loop: "{{ neighbor_list }}"
+
+- name: Capturar informações CDP dos vizinhos recursivamente
+  hosts: all
+  gather_facts: no
+  tasks:
+    
+    - name: include_tasks
+      include_tasks: cdprecursivo_tasks.yml
+
+    - name: Inicializar a lista de vizinhos, se não definida
+      set_fact:
+        neighbor_list: "{{ neighbor_list | default([]) }}"
+
+    - name: Acessar o vizinho via IP e coletar CDP
+      ios_command:
+        commands: "show cdp neighbors detail"
+      register: cdp_output
+
+    - name: Extrair novos vizinhos dos vizinhos
+      set_fact:
+        neighbor_list: "{{ neighbor_list | default([]) + new_neighbors }}"
+      vars:
+        new_neighbors: >
+          [{% for item in cdp_output.stdout_lines[0] %}
+            {% if item['management_ip'] %}
+              {"hostname": "{{ item['destination_host'] }}", "ip": "{{ item['management_ip'] }}"}{% if not loop.last %},{% endif %}
+            {% endif %}
+          {% endfor %}]
+    
+    - name: Filtrar vizinhos novos (não processados)
+      set_fact:
+        new_neighbors: "{{ neighbor_list | difference(existing_neighbors | default([])) }}"
+
+    - name: Adicionar novos vizinhos à lista
+      debug:
+        msg: "Novo vizinho encontrado: {{ item['hostname'] }} com IP {{ item['ip'] }}"
+      loop: "{{ new_neighbors }}"
+
+    - name: Adicionar novos vizinhos ao inventário dinâmico
+      add_host:
+        name: "{{ item['hostname'] }}"
+        ansible_host: "{{ item['ip'] }}"
+      loop: "{{ new_neighbors }}"
+
+    - name: Verificar se existem novos vizinhos a processar
+      debug:
+        msg: "Existem novos vizinhos a processar."
+      when: new_neighbors | length > 0
+
+    - name: Continuar capturando informações dos novos vizinhos
+      include_tasks: cdprecursivo_tasks.yml
+      when: new_neighbors | length > 0

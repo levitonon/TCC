@@ -1,0 +1,56 @@
+---
+- name: Inicializar a lista de vizinhos, se não definida
+  set_fact:
+    neighbor_list: "{{ neighbor_list | default([]) }}"
+
+- name: Acessar o vizinho via IP e coletar CDP
+  ios_command:
+    commands:
+      - show cdp neighbors detail
+  register: cdp_output_vizinho
+
+- name: Extrair novos vizinhos dos vizinhos
+  set_fact:
+    new_neighbors: "{{ cdp_output_vizinho.stdout[0] | regex_findall('Device ID: (\\S+)[\\s\\S]*?IP address: (\\S+)', multiline=True) }}"
+
+- name: Filtrar vizinhos novos (não processados)
+  set_fact:
+    filtered_neighbors: "{{ new_neighbors | rejectattr('1', 'in', processed_ips) | list }}"
+  vars:
+    processed_ips: "{{ neighbor_list | map(attribute='ip') | list }}"
+
+- name: Adicionar novos vizinhos à lista
+  set_fact:
+    neighbor_list: "{{ neighbor_list + [{'hostname': item.0, 'ip': item.1}] }}"
+  loop: "{{ filtered_neighbors }}"
+  when: filtered_neighbors | length > 0
+
+- name: Exibir novos vizinhos descobertos
+  debug:
+    msg: "Novo vizinho encontrado: {{ item.0 }} com IP {{ item.1 }}"
+  loop: "{{ filtered_neighbors }}"
+  when: filtered_neighbors | length > 0
+
+- name: Adicionar novos vizinhos ao inventário dinâmico
+  add_host:
+    name: "{{ item.0 }}"
+    ansible_host: "{{ item.1 }}"
+    groups: discovered_neighbors
+    ansible_user: "{{ ansible_user }}"
+    ansible_password: "{{ ansible_password }}"
+    ansible_network_os: "{{ ansible_network_os }}"
+    ansible_connection: "{{ ansible_connection }}"
+    ansible_become: "{{ ansible_become }}"
+    ansible_become_method: "{{ ansible_become_method }}"
+    ansible_become_password: "{{ ansible_become_password }}"
+  loop: "{{ filtered_neighbors }}"
+  when: filtered_neighbors | length > 0
+
+- name: Verificar se existem novos vizinhos a processar
+  when: filtered_neighbors | length > 0
+  debug:
+    msg: "Existem novos vizinhos a processar."
+
+- name: Continuar capturando informações dos novos vizinhos
+  include_tasks: cdprecursivo_tasks.yml
+  when: filtered_neighbors | length > 0

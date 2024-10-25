@@ -1,0 +1,48 @@
+---
+- name: Adicionar host SW1 no Zabbix via SNMP
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    zabbix_api_url: "http://192.168.0.225/api_jsonrpc.php"
+    auth_token: "9016c2e484b954ef43f2adf98e69c4a0"
+    host_name: "SW1"
+    host_ip: "192.168.10.10"
+    template_id: 10218
+    group_id: 6
+
+  tasks:
+    - name: Criar host SW1 no Zabbix
+      uri:
+        url: "{{ zabbix_api_url }}"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          jsonrpc: "2.0"
+          method: "host.create"
+          params:
+            host: "{{ host_name }}"
+            interfaces:
+              - type: 2                    # 1 = agente Zabbix, 2 = SNMP, 3 = IPMI, 4 = JMX
+                main: 1                    # 1 = interface principal
+                useip: 1                   # 1 = usar IP em vez de DNS
+                ip: "{{ host_ip }}"
+                dns: ""
+                port: "161"                # Porta padrão SNMP
+                details:                   # SNMP-specific fields
+                  version: 2               # SNMP v2
+                  community: "public"      # Comunidade SNMP
+            groups:
+              - groupid: "{{ group_id }}"  # ID do grupo de hosts
+            templates:
+              - templateid: "{{ template_id }}"  # ID do template
+          auth: "{{ auth_token }}"
+          id: 1
+        return_content: yes
+      register: create_host
+
+    - name: Verificar a resposta da criação do host
+      debug:
+        var: create_host.json

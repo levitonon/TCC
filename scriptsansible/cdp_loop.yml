@@ -1,0 +1,17 @@
+---
+- name: Coletar informações de vizinhos CDP
+  hosts: routers
+  gather_facts: no
+  tasks:
+    - name: Executar show cdp neighbors detail
+      ios_command:
+        commands: "show cdp neighbors detail"
+      register: cdp_output
+
+    - name: Extrair hostnames e IPs dos vizinhos
+      set_fact:
+        neighbors: "{{ cdp_output.stdout[0] | regex_findall('Device ID: ([^\\n]+)\\n.*?IP address: ([\\d.]+)', 's') }}"
+        
+    - name: Exibir vizinhos
+      debug:
+        msg: "{{ neighbors }}"

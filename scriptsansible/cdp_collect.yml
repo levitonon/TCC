@@ -1,0 +1,53 @@
+---
+- name: Conectar ao vizinho e coletar CDP
+  hosts: "{{ neighbor.hostname }}"
+  gather_facts: false
+  connection: network_cli
+  vars:
+    visited_hosts: "{{ hostvars[groups['my_router'][0]].visited_hosts | default([]) }}"
+    cdp_data: "{{ hostvars[groups['my_router'][0]].cdp_data | default([]) }}"
+
+  tasks:
+    - name: Executar o comando 'show cdp neighbors detail'
+      ios_command:
+        commands:
+          - show cdp neighbors detail
+      register: cdp_output
+
+    - name: Extraindo hostname e IP do output
+      set_fact:
+        neighbors: "{{ cdp_output.stdout[0] | regex_findall('Device ID: (\\S+)[\\s\\S]*?IP address: (\\S+)', multiline=True) }}"
+
+    - name: Armazenar informações dos vizinhos
+      set_fact:
+        neighbor_list: "{{ neighbor_list | default([]) + [{'hostname': item.0, 'ip': item.1}] }}"
+      loop: "{{ neighbors }}"
+
+    - name: Salvar informações coletadas
+      set_fact:
+        cdp_data: "{{ cdp_data + [{'hostname': inventory_hostname, 'ip': ansible_host, 'neighbors': neighbor_list}] }}"
+
+    - name: Exibir a lista de vizinhos
+      debug:
+        var: neighbor_list
+
+    - name: Mostrar os vizinhos encontrados
+      debug:
+        msg: "Hostname: {{ item.hostname }}, IP: {{ item.ip }}"
+      loop: "{{ neighbor_list }}"
+
+    - name: Recolher CDP de vizinhos não visitados
+      block:
+        - name: Verificar se o vizinho já foi visitado
+          set_fact:
+            visited_hosts: "{{ visited_hosts + [item.ip] }}"
+          when: item.ip not in visited_hosts
+          loop: "{{ neighbor_list }}"
+          register: visit_check
+
+        - name: Acessar vizinho e coletar CDP
+          include_tasks: cdp_collect.yml
+          loop: "{{ neighbor_list }}"
+          when: item.ip not in visited_hosts
+          loop_control:
+            loop_var: neighbor

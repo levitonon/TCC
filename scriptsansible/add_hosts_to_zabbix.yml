@@ -1,0 +1,47 @@
+---
+- name: Adicionar hosts ao Zabbix
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    zabbix_api_url: "http://192.168.0.225/api_jsonrpc.php"
+    auth_token: "9016c2e484b954ef43f2adf98e69c4a0"
+    template_id: 10218
+    group_id: 6
+
+  tasks:
+    - name: Adicionar hosts ao Zabbix
+      uri:
+        url: "{{ zabbix_api_url }}"
+        method: POST
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+        body:
+          jsonrpc: "2.0"
+          method: "host.create"
+          params:
+            host: "{{ item[0] }}"  # device_id
+            interfaces:
+              - type: 2                    # 2 = SNMP
+                main: 1                    # 1 = interface principal
+                useip: 1                   # 1 = usar IP em vez de DNS
+                ip: "{{ item[1] }}"        # ip_address
+                dns: ""
+                port: "161"                # Porta padrão SNMP
+                details:                   # Campos específicos do SNMP
+                  version: 2               # SNMP v2
+                  community: "public"      # Comunidade SNMP
+            groups:
+              - groupid: "{{ group_id }}"  # ID do grupo de hosts
+            templates:
+              - templateid: "{{ template_id }}"  # ID do template
+          auth: "{{ auth_token }}"
+          id: 1
+        return_content: yes
+      register: create_host
+      loop: "{{ neighbors }}"
+
+    - name: Verificar a resposta da criação do host no Zabbix
+      debug:
+        var: create_host.json

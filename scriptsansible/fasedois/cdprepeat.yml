@@ -1,0 +1,109 @@
+---
+- name: Capturar informações CDP neighbors do roteador Cisco
+  hosts: routers
+  gather_facts: false
+  connection: network_cli
+  tasks:
+
+    - name: Inicializar a lista de vizinhos descobertos
+      set_fact:
+        discovered_neighbors: []
+
+    - name: Executar o comando 'show cdp neighbors detail'
+      ios_command:
+        commands:
+          - show cdp neighbors detail
+      register: cdp_output
+
+    - name: Extraindo hostname e IP do output
+      set_fact:
+        neighbors: "{{ cdp_output.stdout[0] | regex_findall('Device ID: (\\S+)[\\s\\S]*?IP address: (\\S+)', multiline=True) }}"
+
+    - name: Filtrar novos vizinhos (sem duplicar)
+      set_fact:
+        new_neighbors: "{{ neighbors | selectattr('1', 'search', '^((?!' + (discovered_neighbors | map(attribute='ip') | join('|')) + ').)*$') | list }}"
+
+    - name: Atualizar lista de vizinhos descobertos
+      set_fact:
+        discovered_neighbors: "{{ discovered_neighbors + new_neighbors }}"
+
+    - name: Armazenar informações dos novos vizinhos em uma lista
+      set_fact:
+        neighbor_list: "{{ neighbor_list | default([]) + [{'hostname': item.0, 'ip': item.1}] }}"
+      loop: "{{ new_neighbors }}"
+
+    - name: Salvar lista de vizinhos em um arquivo JSON
+      copy:
+        content: "{{ neighbor_list | to_json | indent(2) }}"
+        dest: "/home/osboxes/neighbors.json"
+        mode: '0644'
+
+    - name: Exibir a lista de vizinhos
+      debug:
+        var: neighbor_list
+
+    - name: Mostrar os vizinhos encontrados
+      debug:
+        msg: "Hostname: {{ item.hostname }}, IP: {{ item.ip }}"
+      loop: "{{ neighbor_list }}"
+
+    - name: Criar um inventário dinâmico
+      add_host:
+        name: "{{ item.hostname }}"  # Nome do dispositivo
+        ansible_host: "{{ item.ip }}"  # IP do dispositivo
+        groups: discovered_neighbors
+        ansible_user: "{{ ansible_user }}"
+        ansible_password: "{{ ansible_password }}"
+        ansible_network_os: "{{ ansible_network_os }}"
+        ansible_connection: "{{ ansible_connection }}"
+        ansible_become: "{{ ansible_become }}"
+        ansible_become_method: "{{ ansible_become_method }}"
+        ansible_become_password: "{{ ansible_become_password }}"
+      loop: "{{ neighbor_list }}"
+
+- name: Capturar informações CDP dos vizinhos
+  hosts: discovered_neighbors
+  gather_facts: false
+  connection: network_cli
+  tasks:
+
+    - name: Acessar o vizinho via IP e coletar CDP
+      ios_command:
+        commands:
+          - show cdp neighbors detail
+      register: cdp_output_vizinho
+
+    - name: Extraindo hostname e IP do output do vizinho
+      set_fact:
+        neighbors: "{{ cdp_output_vizinho.stdout[0] | regex_findall('Device ID: (\\S+)[\\s\\S]*?IP address: (\\S+)', multiline=True) }}"
+
+    - name: Filtrar novos vizinhos (sem duplicar)
+      set_fact:
+        new_neighbors: "{{ neighbors | selectattr('1', 'search', '^((?!' + (discovered_neighbors | map(attribute='ip') | join('|')) + ').)*$') | list }}"
+
+    - name: Atualizar a lista de vizinhos descobertos
+      set_fact:
+        discovered_neighbors: "{{ discovered_neighbors + new_neighbors }}"
+
+    - name: Armazenar informações dos novos vizinhos em uma lista
+      set_fact:
+        neighbor_list: "{{ neighbor_list | default([]) + [{'hostname': item.0, 'ip': item.1}] }}"
+      loop: "{{ new_neighbors }}"
+
+    - name: Criar um inventário dinâmico para os novos vizinhos
+      add_host:
+        name: "{{ item.0 }}"
+        ansible_host: "{{ item.1 }}"
+        groups: discovered_neighbors
+        ansible_user: "{{ ansible_user }}"
+        ansible_password: "{{ ansible_password }}"
+        ansible_network_os: "{{ ansible_network_os }}"
+        ansible_connection: "{{ ansible_connection }}"
+        ansible_become: "{{ ansible_become }}"
+        ansible_become_method: "{{ ansible_become_method }}"
+        ansible_become_password: "{{ ansible_become_password }}"
+      loop: "{{ new_neighbors }}"
+
+    - name: Exibir a lista de novos vizinhos descobertos
+      debug:
+        var: neighbor_list

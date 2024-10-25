@@ -1,0 +1,52 @@
+---
+- name: Capturar informações CDP neighbors do roteador Cisco e adicionar ao Zabbix
+  hosts: my_router
+  gather_facts: false
+  connection: network_cli
+  tasks:
+
+    - name: Executar o comando 'show cdp neighbors detail'
+      ios_command:
+        commands:
+          - show cdp neighbors detail
+      register: cdp_output
+
+    - name: Debug da saída do comando
+      debug:
+        var: cdp_output.stdout[0]
+
+    - name: Inicializar a lista de neighbors
+      set_fact:
+        neighbors: []
+
+    - name: Extraindo hostname e IP do output manualmente
+      set_fact:
+        neighbors: >-
+          {%- set new_neighbors = [] -%}
+          {%- for line in cdp_output.stdout[0].splitlines() -%}
+            {%- if "Device ID" in line -%}
+              {%- set device = line.split(': ')[1].strip() -%}
+            {%- elif "IP address" in line -%}
+              {%- set ip = line.split(': ')[1].strip() -%}
+              {%- if device is defined and ip is defined -%}
+                {%- set _ = new_neighbors.append([device, ip]) -%}
+                {%- set device = none -%}  {# Limpa a variável device após uso #}
+                {%- set ip = none -%}      {# Limpa a variável ip após uso #}
+              {%- endif -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ new_neighbors }}
+
+    - name: Exibir o conteúdo de neighbors
+      debug:
+        var: neighbors
+
+    - name: Mostrar os vizinhos encontrados
+      debug:
+        msg: "Hostname: {{ item[0] }}, IP: {{ item[1] }}"
+      loop: "{{ neighbors }}"
+      when: neighbors | length > 0
+
+    - name: Invocar playbook para adicionar hosts ao Zabbix
+      ansible.builtin.include_tasks: add_hosts_to_zabbix.yml
+      when: neighbors | length > 0
