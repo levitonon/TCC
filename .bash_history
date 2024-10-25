@@ -677,3 +677,94 @@ python3 create_map3.py
 rm create_map3.py 
 sudo nano create_map3.py 
 python3 create_map3.py 
+ip r
+sudo ip r a 192.168.10.0/24 via 192.168.0.69
+sudo ip r a 192.168.20.0/24 via 192.168.0.69
+cd TCCPYTHON/
+source venv/bin/activate
+ls
+python3 create_map_with_connections.py 
+ls
+python3 create_map4.py 
+sudo nano create_map4.py 
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py 
+python3 create_map4.py 
+sudo nano create_map4.py 
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py 
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py 
+python3 create_map4.py 
+cd ..
+mkdir arquivos_tcc
+cd arquivos_tcc/
+cp /home/osboxes/TCCPYTHON/create_map4.py 
+cp /home/osboxes/TCCPYTHON/create_map4.py .
+ls
+cp /home/osboxes/TCCPYTHON/zabbixreadertest.yml .
+cd /home/osboxes/TCCPYTHON
+ls
+nano cdp_graph.py 
+nano cdp_script2.py 
+nano cdp_graph.py 
+ls
+rm discovered_neighbors.json 
+rm network_graph.json 
+ls
+python3 cdp_graph.py 
+python3 create_map4.py 
+cd ..
+cd arquivos_tcc/
+cp /home/osboxes/TCCPYTHON/cdp_graph.py .
+ls
+rename
+rn
+rndir
+CD ..
+LS
+CD ..
+cd ..
+ls
+sudo nano .gitignore
+git add .
+git .
+git init
+git add .
+git commit -m "Upload ambiente funcionando"
+nano token.txt 
+git push -u origin master
+git remote add origin https://github.com/levitonon/TCC
+git push -u origin master
+git pull
+ls
+git push -u origin master
+git push --help
+git push -u origin master
+git pull
+git pull remote master
+git push -u origin master
+git pull origin master --rebase
+git push origin master
+ls
+cd TCCPYTHON/
+LS
+ls
+cd ..
+ls
+rm cdp_graph.py 
+rm cdp_script.py 
+rm cdp_script2.py 
+rm create_map.py 
+rm create_map2.py 
+rm create_map3.py 
+rm create_map4.py 
+rm create_map_with_connections.py 
+rm create_map_with_no_connections.py 
+rm discovered_neighbors.json 
+rm network_graph.json 
+rm zabbixreadertest.yml 
+exit
