@@ -1001,3 +1001,53 @@ git rm -r --cached TCCPYTHON
 git add TCCPYTHON
 git commit -m "Corrigir estrutura da pasta TCCPYTHON e re-adicionar"
 git push origin master
+ls
+cd arquivos_tcc/
+ls
+sudo nano execute.py
+source /home/osboxes/venv/bin/activate
+python3 execute.py 
+ls
+ssh Admin@192.168.10.17
+python3 execute.py 
+ls
+nano discovered_neighbors.json 
+nano zabbixreadertest.yml 
+ansible-playbook zabbixreadertest.yml 
+nano network_graph.json 
+python3 create_map4.py 
+ls
+sudo rm discovered_neighbors.json 
+sudo rm network_graph.json 
+python3 execute.py 
+ls
+rm discovered_neighbors.json 
+rm network_graph.json 
+sudo nano create_map4.py 
+ls
+python3 execute.py 
+sudo nano create_map4.py 
+python3 create_map4.py 
+sudo nano create_map4.py 
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+cd ..
+git add .
+git commit -m "Ajustes de localização de arquivos. Tentativa de ajustar mapa"
+nano token.txt 
+git push -u origin master
+ls
+cd TCCPYTHON/
+ls
+exit
