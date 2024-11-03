@@ -1,7 +1,0 @@
----
-- name: Enable archiving
-  cisco.ios.ios_command:
-    commands:
-      - configure terminal
-      - archive
-      - path flash:/

@@ -1,8 +1,0 @@
-download_url: https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections/artifacts/cisco-ios-9.0.2.tar.gz
-format_version: 1.0.0
-name: ios
-namespace: cisco
-server: https://galaxy.ansible.com/api/
-signatures: []
-version: 9.0.2
-version_url: /api/v3/plugin/ansible/content/published/collections/index/cisco/ios/versions/9.0.2/
