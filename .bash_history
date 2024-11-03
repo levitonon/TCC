@@ -768,3 +768,236 @@ rm discovered_neighbors.json
 rm network_graph.json 
 rm zabbixreadertest.yml 
 exit
+cd TCCPYTHON/
+ip r
+ip r a 192.168.10.0/24 via 192.168.0.69
+sudo ip r a 192.168.10.0/24 via 192.168.0.69
+sudo ip r a 192.168.20.0/24 via 192.168.0.69
+ls
+sudo nano create_map4.py
+source venv/bin/activate
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+nano network_graph.json 
+rm create_map4.py 
+nano network_graph.json 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map4.py
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+ls
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map4.py
+ls
+python3 create_map4.py 
+nnao network_graph.json 
+nano network_graph.json 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map_with_no_connections.py
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map.py
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map4.py
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+rm create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo nano create_map4.py
+python3 create_map4.py 
+sudo apt intall git
+sudo apt install git
+git init
+git add .
+git commit -m "Commit inicial"
+git config --global user.email levitonon@hotmail.com
+git config --global user.name levitonon
+git remote add origin https://github.com/levitonon/TCC
+git push -u origin master
+git commit -m "Commit inicial"
+git push -u origin master
+git config --global credential.helper cache
+git push -u origin master
+sudo nano token.txt
+git config --global credential.helper cache
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+rm create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+nano network_graph.json 
+rm create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+rm create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+rm create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+rm create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+rm create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+ping 192.168.0.225
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+rm create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+sudo nano create_map_with_connections.py
+python3 create_map_with_connections.py 
+curl -X POST -H "Content-Type: application/json" -d '{
+    "jsonrpc": "2.0",
+    "method": "host.get",
+    "params": {
+        "output": "extend"  # Isso retorna todas as informações dos hosts
+    },
+    "auth": "SEU_TOKEN_AQUI",  # Substitua pelo token que você obteve na etapa anterior
+    "id": 2
+}' http://192.168.0.225/zabbix/api_jsonrpc.php
+curl -X POST -H "Content-Type: application/json" -d '{
+    "jsonrpc": "2.0",
+    "method": "user.login",
+    "params": {
+        "user": "Admin",
+        "password": "zabbix"
+    },
+    "id": 1
+}' http://192.168.0.225/zabbix/api_jsonrpc.php
+curl -X POST -H "Content-Type: application/json" -d '{
+    "jsonrpc": "2.0",
+    "method": "user.login",
+    "params": {
+        "user": "Admin",
+        "password": "zabbix"
+    },
+    "id": 1
+}' http://192.168.0.225/zabbix/api_jsonrpc.php
+git push -u origin master
+nano token.txt 
+sudo nano token.txt 
+git push -u origin master
+git add .
+git commit -m "Adição"
+git push -u origin master
+sudo nano .gitignore
+git push -u origin master
+git add .
+git commit -m "Adição"
+git push -u origin master
+cp token.txt /home/osboxes/
+ls
+rm token.txt 
+cd ..
+ls
+cd T
+cd TCCPYTHON/
+git add .
+git commit -m "Ajustes e adições"
+git push -u origin master
+git filter-branch --force --index-filter "git rm --cached --ignore-unmatch token.txt" --prune-empty --tag-name-filter cat -- --all
+git push -u origin master
+sudo apt upgrade
+python --version
+sudo apt install python3.8
+apt list --upgradable
+sudo apt upgrade python
+ip r
+nano neighbors.json 
+ip r a 
+ip r a 192.168.10.0/24 via 192.168.0.69
+sudo ip r a 192.168.10.0/24 via 192.168.0.69
+sudo ip r a 192.168.20.0/24 via 192.168.0.69
+ip r
+ls
+git add .
+git commit -m "Ajustes"
+nano token.txt 
+git push -u master origin
+git push -u master 
+nano token.txt 
+git push -u origin master 
+git rm -r --cached TCCPYTHON
+ls
+ls TCCPYTHON
+git add TCCPYTHON
+git commit -m "Re-adicionar a pasta TCCPYTHON com a estrutura correta"
+rm -rf TCCPYTHON/.git
+git add TCCPYTHON
+git commit -m "Corrigir estrutura da pasta TCCPYTHON"
+git push origin master
+git status
+git rm -r --cached TCCPYTHON
+git add TCCPYTHON
+git commit -m "Corrigir estrutura da pasta TCCPYTHON e re-adicionar"
+git push origin master

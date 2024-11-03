@@ -9,7 +9,7 @@ ZABBIX_API_URL = "http://192.168.0.225/api_jsonrpc.php"
 AUTH_TOKEN = "9016c2e484b954ef43f2adf98e69c4a0"  # Atualize com seu token válido
 
 # Caminho para o arquivo JSON da rede
-JSON_REDE_PATH = "/home/osboxes/TCCPYTHON/network_graph.json"  # Caminho atualizado
+JSON_REDE_PATH = "/home/osboxes/arquivos_tcc/network_graph.json"  # Caminho atualizado
 
 # Função para fazer chamadas à API do Zabbix
 def zabbix_api_call(method, params):
