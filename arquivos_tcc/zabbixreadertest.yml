@@ -1,57 +1,58 @@
 ---
-- name: Adicionar hosts no Zabbix via SNMP
-  hosts: localhost
-  gather_facts: false
+
+- name: Adicionar hosts no Zabbix via SNMP  # Nome do playbook
+  hosts: localhost                          # Define que o playbook será executado no host localhost
+  gather_facts: false                       
 
   vars:
-    zabbix_api_url: "http://192.168.0.225/api_jsonrpc.php"
-    auth_token: "9016c2e484b954ef43f2adf98e69c4a0"
-    template_id: 10218
-    group_id: 6
-    json_file_path: "/home/osboxes/arquivos_tcc/discovered_neighbors.json"  # Caminho do arquivo JSON com os vizinhos
+    zabbix_api_url: "http://192.168.0.225/api_jsonrpc.php"  # URL da API do Zabbix
+    auth_token: "9016c2e484b954ef43f2adf98e69c4a0"            # Token de autenticação da API
+    template_id: 10218                                      # ID do template a ser aplicado aos hosts
+    group_id: 6                                             # ID do grupo de hosts no Zabbix
+    json_file_path: "/home/osboxes/arquivos_tcc/discovered_neighbors.json"  # Caminho absoluto do arquivo JSON contendo os vizinhos descobertos
 
   tasks:
     - name: Ler informações dos vizinhos do arquivo JSON
       slurp:
-        src: "{{ json_file_path }}"
-      register: json_content
+        src: "{{ json_file_path }}"  
+      register: json_content           
 
     - name: Decodificar conteúdo JSON
       set_fact:
-        neighbor_list: "{{ json_content.content | b64decode | from_json }}"
+        neighbor_list: "{{ json_content.content | b64decode | from_json }}"  
 
     - name: Adicionar cada host no Zabbix
       uri:
-        url: "{{ zabbix_api_url }}"
-        method: POST
-        body_format: json
+        url: "{{ zabbix_api_url }}"                  
+        method: POST                                  # Método HTTP a ser usado
+        body_format: json                             # Formato do corpo da requisição
         headers:
-          Content-Type: "application/json"
-        body:
-          jsonrpc: "2.0"
-          method: "host.create"
+          Content-Type: "application/json"            
+        body:                                         
+          jsonrpc: "2.0"                              
+          method: "host.create"                       # Método a ser chamado na API do Zabbix
           params:
-            host: "{{ item.hostname }}"
+            host: "{{ item.hostname }}"               # Nome do host a ser criado
             interfaces:
-              - type: 2                    # 1 = agente Zabbix, 2 = SNMP, 3 = IPMI, 4 = JMX
-                main: 1                    # 1 = interface principal
-                useip: 1                   # 1 = usar IP em vez de DNS
-                ip: "{{ item.ip }}"
-                dns: ""
-                port: "161"                # Porta padrão SNMP
-                details:                   # SNMP-specific fields
-                  version: 2               # SNMP v2
-                  community: "public"      # Comunidade SNMP
+              - type: 2                                # Tipo de interface: 1 = agente Zabbix, 2 = SNMP, 3 = IPMI, 4 = JMX
+                main: 1                                # Define esta interface como principal
+                useip: 1                               # Usa o IP em vez de DN
+                ip: "{{ item.ip }}"                    # Endereço IP do host
+                dns: ""                                
+                port: "161"                            # Porta padrão SNMP
+                details:                              
+                  version: 2                           # Versão do SNMP
+                  community: "public"                  # Community 
             groups:
-              - groupid: "{{ group_id }}"  # ID do grupo de hosts
+              - groupid: "{{ group_id }}"              # ID do grupo de hosts onde o host será adicionado
             templates:
-              - templateid: "{{ template_id }}"  # ID do template
-          auth: "{{ auth_token }}"
-          id: 1
-        return_content: yes
-      register: create_host
-      loop: "{{ neighbor_list }}"  # Loop através da lista de vizinhos
+              - templateid: "{{ template_id }}"        # ID do template que será aplicado ao host
+          auth: "{{ auth_token }}"                      # Token de autenticação para a API do Zabbix
+          id: 1                                         # ID da requisição
+        return_content: yes                            
+      register: create_host                             # Registra a resposta da API na variável 'create_host'
+      loop: "{{ neighbor_list }}"                       # Executa a tarefa para cada item na lista de vizinhos
 
     - name: Verificar a resposta da criação dos hosts
       debug:
-        var: create_host.json
+        var: create_host.json  
