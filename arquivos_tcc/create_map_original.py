@@ -127,12 +127,12 @@ def processar_json(json_rede):
     return dispositivos, conexoes
 
 # Função para calcular a posição de cada localidade de forma radial
-def calcular_posicao_radia(largura, altura, index, total, raio_inicial=600, delta_raio=400):
+def calcular_posicao_radia(largura, altura, index, total, raio_inicial=300, delta_raio=200):
     if total == 0:
         return largura // 2, altura // 2
     # Calcular o ângulo para a localidade atual
     angulo = (2 * math.pi / total) * index
-    raio = raio_inicial + (delta_raio * index)  # Incrementa o raio para cada localidade
+    raio = raio_inicial + (delta_raio * (index // 4))  # Ajustar o raio conforme necessário
 
     x = largura // 2 + int(raio * math.cos(angulo))
     y = altura // 2 + int(raio * math.sin(angulo))
@@ -140,9 +140,9 @@ def calcular_posicao_radia(largura, altura, index, total, raio_inicial=600, delt
 
 # Função para criar o mapa no Zabbix
 def criar_mapa(localidade_mapa, dispositivos, conexoes):
-    nome_mapa = f"Mapa da {localidade_mapa}"
-    largura = 7000  # Aumentado para 7000
-    altura = 6000    # Aumentado para 6000
+    nome_mapa = f"Mapa da Localidade {localidade_mapa}"
+    largura = 2000  # Aumentado para 2000
+    altura = 1200    # Aumentado para 1200
 
     mapa = {
         "name": nome_mapa,
@@ -168,11 +168,10 @@ def criar_mapa(localidade_mapa, dispositivos, conexoes):
     for idx, loc in enumerate(sorted_localidades):
         x_base, y_base = calcular_posicao_radia(largura, altura, idx, total_locais)
         posicoes_localidades[loc] = (x_base, y_base)
-        print(f"Localidade '{loc}' posicionada em ({x_base}, {y_base})")
 
     # Mapeamento de hostid para selementid
     host_to_selementid = {}
-    next_selementid = 1  # Iniciar ID dos elementos
+    next_selementid = 1  # Iniciar ID dos selements
 
     # Buscar os hostids para todos os dispositivos
     print("Buscando hostids dos dispositivos no Zabbix...")
@@ -196,19 +195,11 @@ def criar_mapa(localidade_mapa, dispositivos, conexoes):
         for dispositivo in localidades[loc]:
             tipos[dispositivo['tipo']].append(dispositivo)
 
-        # Definir espaçamento horizontal e vertical dentro da localidade
-        espaco_horizontal_dispositivos = 300  # Espaço horizontal entre dispositivos do mesmo tipo
-        deslocamento_vertical_inicial = -600   # Posição inicial vertical para dispositivos
+        # Definir espaçamento horizontal dentro da localidade
+        espaco_horizontal_dispositivos = 150  # Espaço horizontal entre dispositivos do mesmo tipo
 
         for tipo in ['router', 'core', 'distribuicao', 'acesso', 'desconhecido']:
             dispositivos_tipo = tipos.get(tipo, [])
-            num_dispositivos = len(dispositivos_tipo)
-            if num_dispositivos == 0:
-                continue
-
-            # Calcular espaçamento vertical com base no número de dispositivos
-            espaco_vertical_dispositivos = 150  # Espaço vertical entre dispositivos do mesmo tipo
-
             for i, dispositivo in enumerate(dispositivos_tipo):
                 hostname = dispositivo['hostname']
                 tipo_dispositivo = dispositivo['tipo']
@@ -216,12 +207,18 @@ def criar_mapa(localidade_mapa, dispositivos, conexoes):
 
                 icon_id = TIPOS_ICONE.get(tipo_dispositivo, TIPOS_ICONE['desconhecido'])
 
-                # Calcular posição relativa baseada no índice para evitar sobreposição
-                offset_x = (i - num_dispositivos / 2) * espaco_horizontal_dispositivos
-                offset_y = deslocamento_vertical_inicial + (i * espaco_vertical_dispositivos)
+                # Calcular posição y baseada no tipo
+                posicao_tipo = {
+                    'router': y_base,
+                    'core': y_base + 150,
+                    'distribuicao': y_base + 300,
+                    'acesso': y_base + 450,
+                    'desconhecido': y_base + 600
+                }
+                y = posicao_tipo.get(tipo_dispositivo, y_base + 600)
 
-                x = x_base + offset_x
-                y = y_base + offset_y
+                # Calcular posição x com espaçamento para múltiplos dispositivos do mesmo tipo
+                x = x_base + (i - len(dispositivos_tipo) / 2) * espaco_horizontal_dispositivos
 
                 # Mapear hostid para selementid
                 selement_id = next_selementid
