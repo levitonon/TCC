@@ -6,7 +6,7 @@ def executar_codigo1():
 
 def executar_codigo2():
     print("Executando o script create_map4.py (Código 2)")
-    subprocess.run(["python3", "create_map4.py"])  # Executa o código que irá criar o mapa
+    subprocess.run(["python3", "map_per_locale.py"])  # Executa o código que irá criar o mapa
 
 if __name__ == "__main__":
 #Ordem de execução
